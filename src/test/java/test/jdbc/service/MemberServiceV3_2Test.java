@@ -10,29 +10,27 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 import test.jdbc.connection.ConnectionConst;
 import test.jdbc.domain.Member;
-import test.jdbc.repository.MemberRepositoryV1;
-import test.jdbc.repository.MemberRepositoryV2;
+import test.jdbc.repository.MemberRepositoryV3;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MemberServiceV2Test {
+class MemberServiceV3_2Test {
 
     public static final String MEMBER_A = "memberA";
     public static final String MEMBER_B = "memberB";
     public static final String MEMBER_EX = "ex";
 
-    private MemberRepositoryV2 memberRepository;
-    private MemberServiceV2 memberService;
+    private MemberRepositoryV3 memberRepository;
+    private MemberServiceV3_2 memberService;
 
     @BeforeEach
     void before() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(ConnectionConst.URL, ConnectionConst.USERNAME, ConnectionConst.PASSWORD);
-        memberRepository = new MemberRepositoryV2(dataSource);
-
-        memberService = new MemberServiceV2(memberRepository,dataSource);
+        memberRepository = new MemberRepositoryV3(dataSource);
+        PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+        memberService = new MemberServiceV3_2(memberRepository, transactionManager);
     }
 
     @AfterEach
@@ -77,6 +75,7 @@ class MemberServiceV2Test {
         Member findMemberA = memberRepository.findById(memberA.getMemberId());
         Member findMemberB = memberRepository.findById(memberEx.getMemberId());
         Assertions.assertThat(findMemberA.getMoney()).isEqualTo(10000);
-        Assertions.assertThat(findMemberB.getMoney()).isEqualTo(10000 );
+        Assertions.assertThat(findMemberB.getMoney()).isEqualTo(10000);
     }
+
 }
