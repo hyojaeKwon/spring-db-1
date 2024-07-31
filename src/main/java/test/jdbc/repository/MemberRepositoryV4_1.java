@@ -11,22 +11,22 @@ import java.sql.*;
 import java.util.NoSuchElementException;
 
 /**
- * 트랜잭션 - 트랜잭션 매니져
- * DataSourceUtils.getConnection()
- * DataSourceUtils.releaseConnection()
+ * 예외누수 방지
+ * check exceptinon -> runtime exception
  */
 
 @Slf4j
-public class MemberRepositoryV3 {
+public class MemberRepositoryV4_1 implements MemberRepository{
 
     private final DataSource dataSource;
 
-    public MemberRepositoryV3(DataSource dataSource) {
+    public MemberRepositoryV4_1(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
 
-    public Member save(Member member) throws SQLException {
+    @Override
+    public Member save(Member member) {
         String sql = "insert into member(member_id, money) values(?, ?)";
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -40,12 +40,13 @@ public class MemberRepositoryV3 {
             return member;
         } catch (SQLException e) {
             log.error("error", e);
-            throw e;
+            throw new MyDbException(e);
         } finally {
             close(conn, pstmt, null);
         }
     }
 
+    @Override
     public void deleteAll() {
         String sql = "delete from member";
 
@@ -58,20 +59,19 @@ public class MemberRepositoryV3 {
             pstmt.execute();
         } catch (SQLException e) {
             log.error("error", e);
-            throw new MyDbException(e);
         }
         finally{
             close(conn, pstmt, null);
         }
     }
 
-    public Member findById(String memberId) throws SQLException {
+    @Override
+    public Member findById(String memberId) {
         String sql = "select * from member where member_id = ?";
 
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-
 
         try {
             conn = getConnection();
@@ -89,14 +89,15 @@ public class MemberRepositoryV3 {
             }
         } catch (SQLException e) {
             log.error(String.valueOf(e));
-            throw e;
+            throw new MyDbException(e);
         } finally {
             close(conn, pstmt, rs);
         }
 
     }
 
-    public void update(String memberId, int money) throws SQLException {
+    @Override
+    public void update(String memberId, int money) {
         String sql = "update member set money = ? where member_id = ?";
 
         Connection conn = null;
@@ -110,13 +111,14 @@ public class MemberRepositoryV3 {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error(String.valueOf(e));
-            throw e;
+            throw new MyDbException(e);
         } finally {
             close(conn, pstmt, null);
         }
     }
 
-    public void deleteById(String memberId) throws SQLException {
+    @Override
+    public void deleteById(String memberId) {
         String sql = "delete from member where member_id = ?";
 
         Connection conn = null;
@@ -129,22 +131,20 @@ public class MemberRepositoryV3 {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error(String.valueOf(e));
-            throw e;
+            throw new MyDbException(e);
         } finally {
             close(conn, pstmt, null);
         }
     }
 
 
-    private Connection getConnection() throws SQLException {
-//        Connection con = dataSource.getConnection();
+    private Connection getConnection() {
         Connection con = DataSourceUtils.getConnection(dataSource);
         log.info("get connection={}, class={}", con, con.getClass());
         return con;
     }
 
     private void close(Connection conn, Statement stmt, ResultSet rs) {
-//        JdbcUtils.closeConnection(conn);
         DataSourceUtils.releaseConnection(conn,dataSource);
         JdbcUtils.closeStatement(stmt);
         JdbcUtils.closeResultSet(rs);
